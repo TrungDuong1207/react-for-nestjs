@@ -90,6 +90,10 @@ export const callFetchUser = (query: string) => {
     return axios.get<IBackendRes<IModelPaginate<IUser>>>(`/api/v1/users?${query}`);
 }
 
+export const callFetchUserById = (id: string) => {
+    return axios.get<IBackendRes<IUser>>(`/api/v1/users/${id}`);
+}
+
 /**
  * 
 Module Job
@@ -108,6 +112,10 @@ export const callDeleteJob = (id: string) => {
 
 export const callFetchJob = (query: string) => {
     return axios.get<IBackendRes<IModelPaginate<IJob>>>(`/api/v1/jobs?${query}`);
+}
+
+export const callFetchJobForAdmin = (query: string) => {
+    return axios.get<IBackendRes<IModelPaginate<IJob>>>(`/api/v1/jobs/admin?${query}`);
 }
 
 export const callFetchJobById = (id: string) => {

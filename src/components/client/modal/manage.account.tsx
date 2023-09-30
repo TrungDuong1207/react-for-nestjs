@@ -1,14 +1,18 @@
 import { Button, Col, Form, Modal, Row, Select, Table, Tabs, message, notification } from "antd";
 import { isMobile } from "react-device-detect";
 import type { TabsProps } from 'antd';
-import { IResume } from "@/types/backend";
-import { useState, useEffect } from 'react';
-import { callFetchResumeByUser, callGetSubscriberSkills, callUpdateSubscriber } from "@/config/api";
+import { IResume, IUser } from "@/types/backend";
+import { useState, useEffect, useRef } from 'react';
+import { callCreateUser, callFetchResumeByUser, callFetchUser, callFetchUserById, callGetSubscriberSkills, callUpdateSubscriber, callUpdateUser } from "@/config/api";
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { MonitorOutlined } from "@ant-design/icons";
 import { SKILLS_LIST } from "@/config/utils";
 import { useAppSelector } from "@/redux/hooks";
+import { ActionType } from "@ant-design/pro-components";
+import { ModalForm, ProForm, ProFormDigit, ProFormSelect, ProFormText } from "@ant-design/pro-components";
+import { DebounceSelect } from "@/components/admin/user/debouce.select";
+import { ICompanySelect } from "@/components/admin/user/modal.user";
 
 interface IProps {
     open: boolean;
@@ -94,10 +98,128 @@ const UserResume = (props: any) => {
 }
 
 const UserUpdateInfo = (props: any) => {
+    const account = useAppSelector(state => state.account.user);
+    const [dataInit, setDataInit] = useState<IUser | null>(null);
+    const tableRef = useRef<ActionType>();
+    const [form] = Form.useForm();
+
+    const reloadTable = () => {
+        tableRef?.current?.reload();
+    }
+
+    const submitUser = async (valuesForm: any) => {
+        const { name, email, password, address, age, gender } = valuesForm;
+        if (dataInit?._id) {
+            //update
+            const user = {
+                _id: dataInit._id,
+                name,
+                email,
+                password,
+                age,
+                gender,
+                address,
+            }
+
+            const res = await callUpdateUser(user);
+            if (res.data) {
+                message.success("Cập nhật user thành công");
+                handleReset();
+                reloadTable();
+            } else {
+                notification.error({
+                    message: 'Có lỗi xảy ra',
+                    description: res.message
+                });
+            }
+        }
+    }
+
+    useEffect(() => {
+        const init = async () => {
+            const res = await callFetchUserById(account._id);
+            if (res && res.data) {
+                setDataInit(res.data)
+            }
+        }
+        init();
+    }, []);
+
+    const handleReset = async () => {
+        form.resetFields();
+        setDataInit(null);
+    }
+
     return (
-        <div>
-            //todo
-        </div>
+        <>
+            <ProForm
+                scrollToFirstError={true}
+                preserve={false}
+                form={form}
+                onFinish={submitUser}
+                initialValues={dataInit?._id ? dataInit : {}}
+            >
+                <Row gutter={16}>
+                    <Col lg={12} md={12} sm={24} xs={24}>
+                        <ProFormText
+                            label="Email"
+                            name="email"
+                            rules={[
+                                { required: true, message: 'Vui lòng không bỏ trống' },
+                                { type: 'email', message: 'Vui lòng nhập email hợp lệ' }
+                            ]}
+                            placeholder="Nhập email"
+                        />
+                    </Col>
+                    <Col lg={12} md={12} sm={24} xs={24}>
+                        <ProFormText.Password
+                            disabled={dataInit?._id ? true : false}
+                            label="Password"
+                            name="password"
+                            rules={[{ required: dataInit?._id ? false : true, message: 'Vui lòng không bỏ trống' }]}
+                            placeholder="Nhập password"
+                        />
+                    </Col>
+                    <Col lg={6} md={6} sm={24} xs={24}>
+                        <ProFormText
+                            label="Tên hiển thị"
+                            name="name"
+                            rules={[{ required: true, message: 'Vui lòng không bỏ trống' }]}
+                            placeholder="Nhập tên hiển thị"
+                        />
+                    </Col>
+                    <Col lg={6} md={6} sm={24} xs={24}>
+                        <ProFormDigit
+                            label="Tuổi"
+                            name="age"
+                            rules={[{ required: true, message: 'Vui lòng không bỏ trống' }]}
+                            placeholder="Nhập nhập tuổi"
+                        />
+                    </Col>
+                    <Col lg={6} md={6} sm={24} xs={24}>
+                        <ProFormSelect
+                            name="gender"
+                            label="Giới Tính"
+                            valueEnum={{
+                                MALE: 'Nam',
+                                FEMALE: 'Nữ',
+                                OTHER: 'Khác',
+                            }}
+                            placeholder="Please select a gender"
+                            rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
+                        />
+                    </Col>
+                    <Col lg={6} md={6} sm={24} xs={24}>
+                        <ProFormText
+                            label="Địa chỉ"
+                            name="address"
+                            rules={[{ required: true, message: 'Vui lòng không bỏ trống' }]}
+                            placeholder="Nhập địa chỉ"
+                        />
+                    </Col>
+                </Row>
+            </ProForm>
+        </>
     )
 }
 

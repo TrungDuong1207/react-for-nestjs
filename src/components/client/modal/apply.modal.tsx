@@ -54,7 +54,7 @@ const ApplyModal = (props: IProps) => {
     const propsUpload: UploadProps = {
         maxCount: 1,
         multiple: false,
-        accept: "application/pdf,application/msword, .doc, .docx, .pdf",
+        accept: "application/pdf,application/msword, .doc, .docx, .pdf, .jpg",
         async customRequest({ file, onSuccess, onError }: any) {
             const res = await callUploadSingleFile(file, "resume");
             if (res && res.data) {
